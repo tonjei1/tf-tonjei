@@ -1,4 +1,3 @@
-
 #key set up
 ##
 
@@ -46,6 +45,42 @@ provisioner "remote-exec" {
     inline = [
         "chmod 777 /tmp/script.sh",
         "sudo /tmp/script.sh"
+    ]
+}
+}
+
+
+# Create DB EC2 instance
+resource "aws_db_instance" "db-instance1" {
+  allocated_storage    = 10
+  db_name              = "mydb1"
+  engine               = "mysql"
+  engine_version       = "5.7"
+  instance_class       = "db.t3.micro"
+  username             = "foo"
+  password             = "foobarbaz"
+  parameter_group_name = "default.mysql5.7"
+  skip_final_snapshot  = true
+  vpc_security_group_ids = [aws_security_group.my_sg-db.id]
+
+
+provisioner "file" {
+    source = "db-script.sh"
+    destination = "/tmp/db-script.sh"
+}
+
+connection {
+  type = "ssh"
+  user = "ec2_user"
+  password = ""
+  private_key = local_file.private_key_file.content
+  host = self.private_ip
+}
+
+provisioner "remote-exec" {
+    inline = [
+        "chmod 777 /tmp/db-script.sh",
+        "sudo /tmp/db-script.sh"
     ]
 }
 }
@@ -125,39 +160,5 @@ from_port =22
 to_port = 22
 protocol = "tcp"
 cidr_blocks = ["0.0.0.0/0"]
-}
-}
-
-# Create DB EC2 instance
-resource "aws_db_instance" "db-instance1" {
-  allocated_storage    = 10
-  db_name              = "mydb1"
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = "db.t3.micro"
-  username             = "foo"
-  password             = "foobarbaz"
-  parameter_group_name = "default.mysql5.7"
-  skip_final_snapshot  = true
-
-
-provisioner "file" {
-    source = "db-script.sh"
-    destination = "/tmp/db-script.sh"
-}
-
-connection {
-  type = "ssh"
-  user = "ec2_user"
-  password = ""
-  private_key = local_file.private_key_file.content
-  host = self.private_ip
-}
-
-provisioner "remote-exec" {
-    inline = [
-        "chmod 777 /tmp/db-script.sh",
-        "sudo /tmp/db-script.sh"
-    ]
 }
 }
